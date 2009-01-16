@@ -80,7 +80,7 @@ var Try = {
 
 <%= include 'ajax/updater.js', 'ajax/periodical_updater.js' %>
 
-<%= include 'dom/dom.js', 'dom/selector.js', 'dom/form.js', 'dom/event.js' %>
+<%= include 'dom/dom.js', 'dom/layout.js', 'dom/selector.js', 'dom/form.js', 'dom/event.js' %>
 
 <%= include 'deprecated.js' %>
 
