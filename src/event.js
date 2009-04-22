@@ -202,6 +202,8 @@ Object.extend(Event, (function() {
     for (var id in cache)
       for (var eventName in cache[id])
         cache[id][eventName] = null;
+    for(var id in Element.cache)
+      Element.cache[id] = null;
   }
   
   
@@ -310,39 +312,42 @@ Object.extend(document, {
 });
 
 (function() {
-  /* Support for the DOMContentLoaded event is based on work by Dan Webb, 
-     Matthias Miller, Dean Edwards and John Resig. */
+  /* Support for the DOMContentLoaded event is based on work by Dan Webb,
+     Matthias Miller, Dean Edwards, John Resig, and Diego Perini. */
 
   var timer;
-  
+
   function fireContentLoadedEvent() {
     if (document.loaded) return;
-    if (timer) window.clearInterval(timer);
-    document.fire("dom:loaded");
+    if (timer) window.clearTimeout(timer);
     document.loaded = true;
+    document.fire('dom:loaded');
   }
-  
-  if (document.addEventListener) {
-    if (Prototype.Browser.WebKit) {
-      timer = window.setInterval(function() {
-        if (/loaded|complete/.test(document.readyState))
-          fireContentLoadedEvent();
-      }, 0);
-      
-      Event.observe(window, "load", fireContentLoadedEvent);
-      
-    } else {
-      document.addEventListener("DOMContentLoaded", 
-        fireContentLoadedEvent, false);
+
+  function checkReadyState() {
+    if (document.readyState === 'complete') {
+      document.stopObserving('readystatechange', checkReadyState);
+      fireContentLoadedEvent();
     }
-    
-  } else {
-    document.write("<script id=__onDOMContentLoaded defer src=//:><\/script>");
-    $("__onDOMContentLoaded").onreadystatechange = function() { 
-      if (this.readyState == "complete") {
-        this.onreadystatechange = null; 
-        fireContentLoadedEvent();
-      }
-    }; 
   }
+
+  function pollDoScroll() {
+    try { document.documentElement.doScroll('left'); }
+    catch(e) {
+      timer = pollDoScroll.defer();
+      return;
+    }
+    fireContentLoadedEvent();
+  }
+
+  if (document.addEventListener) {
+    document.addEventListener('DOMContentLoaded', fireContentLoadedEvent, false);
+  } else {
+    document.observe('readystatechange', checkReadyState);
+    if (window == top)
+      timer = pollDoScroll.defer();
+  }
+
+  Event.observe(window, 'load', fireContentLoadedEvent);
 })();
+
