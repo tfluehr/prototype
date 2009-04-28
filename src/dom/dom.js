@@ -1886,7 +1886,9 @@ document.viewport = {
       return document;
     
     // Older versions of Opera.
-    if (B.Opera && window.parseFloat(window.opera.version()) < 9.5)
+	// tfluehr - or IE and quirks mode
+    if ((B.Opera && window.parseFloat(window.opera.version()) < 9.5)
+		|| (B.IE && Prototype.BrowserFeatures.QuirksMode))
       return document.body;
     
     return document.documentElement;
