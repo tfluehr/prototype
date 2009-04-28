@@ -40,7 +40,8 @@ var Prototype = {
       }
       
       return false;      
-    })()
+    })(),
+	QuirksMode: (document.compatMode ? document.compatMode == 'BackCompat' : false)
   },
 
   ScriptFragment: '<script[^>]*>([\\S\\s]*?)<\/script>',
