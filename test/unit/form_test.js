@@ -1,4 +1,4 @@
-// sweet sweet additional assertions
+﻿// sweet sweet additional assertions
 Object.extend(Test.Unit.Testcase.prototype, {
   assertEnabled: function() {
     for (var i = 0, element; element = arguments[i]; i++) {
@@ -123,6 +123,132 @@ new Test.Unit.Runner({
     });
   },
   
+  testFormObserverEnhancedBasic: function(){
+    var timedCounter = 0;
+    // should work the same way was Form.Element.Observer
+    var observer = new Form.Observer('bigform', 0.5, function(form, value){
+      ++timedCounter;
+    }, true);
+    
+    // Test it's unchanged yet
+    this.assertEqual(0, timedCounter);
+    // Test it doesn't change on first check
+    this.wait(550, function(){
+      this.assertEqual(0, timedCounter);
+      // Change, test it doesn't immediately change
+      $('focus_text').value = 'yowza!';
+      this.assertEqual(0, timedCounter);
+      // Test it changes on next check, but not again on the next
+      this.wait(550, function(){
+        this.assertEqual(1, timedCounter);
+        this.wait(550, function(){
+          this.assertEqual(1, timedCounter);
+          observer.stop();
+        });
+      });
+    });
+  },
+  testFormObserverEnhancedBasicDelayed: function(){
+    var timedCounter = 0;
+    // should work the same way was Form.Element.Observer
+    var observer = new Form.Observer('bigform', 0.5, function(form, value){
+      ++timedCounter;
+    }, true, 1);
+    
+    // Test it's unchanged yet
+    this.assertEqual(0, timedCounter);
+    // Test it doesn't change on first check
+    this.wait(550, function(){
+      this.assertEqual(0, timedCounter);
+      // Change, test it doesn't immediately change
+      $('focus_text').value = 'yowza!';
+      this.assertEqual(0, timedCounter);
+      // Test it doesn't change on next check (because of the text delay), but does on the next
+      this.wait(550, function(){
+        this.assertEqual(0, timedCounter);
+        this.wait(1000, function(){
+          this.assertEqual(1, timedCounter);
+          this.wait(1050, function(){
+            // test that is hasn't changed again
+            this.assertEqual(1, timedCounter);
+            observer.stop();
+          });
+        });
+      });
+    });
+  },
+  testFormObserverEnhancedAdvanced: function(){
+    var timedCounter = 0;
+    // should work the same way was Form.Element.Observer
+    var form = $('bigform');
+    var observer = new Form.Observer(form, 0.5, function(elements, form, data){
+      ++timedCounter;
+      // test that elements is an array
+      this.assert(elements instanceof Array);
+      switch (timedCounter) {
+        case 1:
+          // test that only one element changed
+          this.assertEqual(elements.size(), 1);
+          // test that changed element is the expected one
+          this.assertEqual($F(elements[0]), $F(form['tf_text']));
+          // test that the changed data matches the form value
+          this.assertEqual(data['tf_text'], $F(form['tf_text']));
+          break;
+        case 2:
+          // test that only teo elements changed
+          this.assertEqual(elements.size(), 2);
+          // test that value of each element is correct and expected
+          elements.each(function(element){
+            this.assertNotEqual('tf_textarea, tf_hidden'.indexOf(element.name), -1);
+            this.assertNotEqual('tf_text' == element.name, true);
+            this.assertEqual($F(element).inspect(), data[element.name].inspect());
+          }.bind(this));
+          break;
+        case 3:
+          break;
+        case 4:
+          break;
+        case 1:
+          break;
+      }
+    }.bind(this), true);
+    
+    // Test it's unchanged yet
+    this.assertEqual(0, timedCounter);
+    // Test it doesn't change on first check
+    this.wait(550, function(){
+      this.assertEqual(0, timedCounter);
+      // Change, test it doesn't immediately change
+      form['tf_text'].value = "test1öäü"; // timedCounter = 1
+      this.assertEqual(0, timedCounter);
+      this.wait(550, function(){
+        // test that it changed only once
+        this.assertEqual(1, timedCounter);
+        this.wait(550, function(){
+          // test that it still only changed only once
+          this.assertEqual(1, timedCounter);
+          form['tf_textarea'].value = "test2boo hoo!";
+          form['tf_text'].value = "test2123öäü";
+          $(form['tf_text']).writeAttribute('abortChange', true);
+          form['tf_hidden'].value = "test2moo%hoo&test";
+          // test that no immediate change
+          this.assertEqual(1, timedCounter);
+          this.wait(550, function(){
+              // test that it only changed once
+              this.assertEqual(2, timedCounter);
+              // test that the abortChangeAttribute was removed
+              this.assert(!$(form['tf_text']).readAttribute('abortChange'));
+              this.wait(550, function(){
+                  // test that it still only changed once
+                  this.assertEqual(2, timedCounter);
+                  observer.stop();
+                });
+            });
+         });
+      });
+    });
+  },
+
   testFormEnabling: function(){
     var form = $('bigform')
     var input1 = $('dummy_disabled');
