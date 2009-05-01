@@ -494,6 +494,7 @@ Form.Observer = Class.create(Abstract.TimedObserver, {
     else {
       element = $(element);
       var callbackTimer;
+      var observerObject = this;
       var changeCallback = function(elements, form, data){
         if (!form) {
           // if the callback came from the select onChange then set the parameters to the proper values
@@ -586,18 +587,41 @@ Form.Observer = Class.create(Abstract.TimedObserver, {
           }
           form.processing = false;
         };
+        var wrapSubmit = function(){
+          if (!observerObject.observerSubmit){
+            observerObject.observerSubmit = element.submit;
+            element.submit = function(){
+              onSubmit(element);
+              element.submit();
+            }
+          }          
+        };
+        var unwrapSubmit = function(){
+          if (observerObject.observerSubmit){
+            element.submit = observerObject.observerSubmit;
+            observerObject.observerSubmit = null;
+          }
+        }
         var onSubmit = function(ev){
-          var form = ev.element();
+          var formEl;
+          if (typeof(ev.element) != 'undefined'){
+            formEl = ev.element();
+          }
+          else {
+            formEl = ev;
+          }
           // stop the observer
           that.stop();
           // to monitor when the form is submitting to prevent observers
-          form.submitting = true;
+          formEl.submitting = true;
           // process one last time prior to submitting to make sure all js has run
           processFunc(element, element.serialize());
           // enable dotnet elements so they post with the form.
-          form.select('#__EVENTTARGET', '#__EVENTARGUMENT', '#__VIEWSTATE').invoke('enable');
+          formEl.select('#__EVENTTARGET', '#__EVENTARGUMENT', '#__VIEWSTATE').invoke('enable');
+          unwrapSubmit();
         };
-        // will not fire when using form.submit() TODO
+        // wraps form.submit to make sure we catch it.
+        wrapSubmit(element);
         element.observe('submit', onSubmit);
         
         return processFunc;

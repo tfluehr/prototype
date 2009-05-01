@@ -205,10 +205,10 @@ new Test.Unit.Runner({
           }.bind(this));
           break;
         case 3:
+          this.assertEqual($F(elements[0]).inspect(), data[elements[0].name].inspect());
           break;
-        case 4:
-          break;
-        case 1:
+        default:
+          this.assertEqual("We shouldn't be here", "Handler ran too many times");
           break;
       }
     }.bind(this), true);
@@ -227,24 +227,34 @@ new Test.Unit.Runner({
         this.wait(550, function(){
           // test that it still only changed only once
           this.assertEqual(1, timedCounter);
-          form['tf_textarea'].value = "test2boo hoo!";
+          form['tf_textarea'].value = "test2boo hoo!"; // timedCounter = 2
           form['tf_text'].value = "test2123öäü";
           $(form['tf_text']).writeAttribute('abortChange', true);
           form['tf_hidden'].value = "test2moo%hoo&test";
           // test that no immediate change
           this.assertEqual(1, timedCounter);
           this.wait(550, function(){
-              // test that it only changed once
+            // test that it only changed once
+            this.assertEqual(2, timedCounter);
+            // test that the abortChangeAttribute was removed
+            this.assert(!$(form['tf_text']).readAttribute('abortChange'));
+            this.wait(550, function(){
+              // test that it still only changed once
               this.assertEqual(2, timedCounter);
-              // test that the abortChangeAttribute was removed
-              this.assert(!$(form['tf_text']).readAttribute('abortChange'));
+              form.writeAttribute('method', 'post');
+              form['tf_text'].value = "test3öäü"; // timedCounter = 3
+              form.submit();
+              form.writeAttribute('method', 'get');
+              // test that it ran one last time during submit
+              this.assertEqual(3, timedCounter);
               this.wait(550, function(){
-                  // test that it still only changed once
-                  this.assertEqual(2, timedCounter);
-                  observer.stop();
-                });
+                // test that it still only changed once
+                this.assertEqual(3, timedCounter);
+                observer.stop();
+              });
             });
-         });
+          });
+        });
       });
     });
   },
@@ -308,7 +318,7 @@ new Test.Unit.Runner({
     
     // Form.focusFirstElement shouldn't focus disabled elements
     var element = Form.findFirstElement('bigform');
-    this.assertEqual('submit', element.id);
+    this.assertEqual('submitBtn', element.id);
     
     // Test IE doesn't select text on buttons
     Form.focusFirstElement('bigform');
