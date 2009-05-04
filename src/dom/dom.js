@@ -1675,14 +1675,14 @@ Element.extend = (function() {
   }
   
   var HTMLOBJECTELEMENT_PROTOTYPE_BUGGY = checkDeficiency('object');
-  var HTMLAPPLETELEMENT_PROTOTYPE_BUGGY = checkDeficiency('applet');
   
   if (Prototype.BrowserFeatures.SpecificElementExtensions) {
     // IE8 has a bug with `HTMLObjectElement` and `HTMLAppletElement` objects 
     // not being able to "inherit" from `Element.prototype` 
     // or a specific prototype - `HTMLObjectElement.prototype`, `HTMLAppletElement.prototype`
-    if (HTMLOBJECTELEMENT_PROTOTYPE_BUGGY && 
-        HTMLAPPLETELEMENT_PROTOTYPE_BUGGY) {
+    // Assume issue exists with HTMLAppletElement if it exists with HTMLObjectElement
+    // because of IE issue with no Java installed
+    if (HTMLOBJECTELEMENT_PROTOTYPE_BUGGY) {
       return function(element) {
         if (element && element.tagName) {
           var tagName = element.tagName.toUpperCase();
@@ -1888,7 +1888,7 @@ document.viewport = {
     // Older versions of Opera.
 	// tfluehr - or IE and quirks mode
     if ((B.Opera && window.parseFloat(window.opera.version()) < 9.5)
-		|| (B.IE && Prototype.BrowserFeatures.QuirksMode))
+        || (B.IE && Prototype.BrowserFeatures.QuirksMode))
       return document.body;
     
     return document.documentElement;
