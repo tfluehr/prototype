@@ -596,12 +596,6 @@ Form.Observer = Class.create(Abstract.TimedObserver, {
             }
           }          
         };
-        var unwrapSubmit = function(){
-          if (observerObject.observerSubmit){
-            element.submit = observerObject.observerSubmit;
-            observerObject.observerSubmit = null;
-          }
-        }
         var onSubmit = function(ev){
           var formEl;
           if (typeof(ev.element) != 'undefined'){
@@ -611,15 +605,15 @@ Form.Observer = Class.create(Abstract.TimedObserver, {
             formEl = ev;
           }
           // stop the observer
-          that.stop();
+          that.stop(true);
           // to monitor when the form is submitting to prevent observers
           formEl.submitting = true;
           // process one last time prior to submitting to make sure all js has run
           processFunc(element, element.serialize());
           // enable dotnet elements so they post with the form.
           formEl.select('#__EVENTTARGET', '#__EVENTARGUMENT', '#__VIEWSTATE').invoke('enable');
-          unwrapSubmit();
-        };
+          that.unwrapSubmit();
+        }.bind(this);
         // wraps form.submit to make sure we catch it.
         wrapSubmit(element);
         element.observe('submit', onSubmit);
@@ -627,6 +621,18 @@ Form.Observer = Class.create(Abstract.TimedObserver, {
         return processFunc;
       })());
     }
+  },
+  unwrapSubmit: function(){    
+    if (this.observerSubmit) {
+      this.element.submit = this.observerSubmit;
+      this.observerSubmit = null;
+    }
+  },
+  stop: function(fromSubmit) {
+    if (!fromSubmit) this.unwrapSubmit();      
+    if (!this.timer) return;
+    clearInterval(this.timer);
+    this.timer = null;
   },
   getValue: function() {
     return Form.serialize(this.element);
