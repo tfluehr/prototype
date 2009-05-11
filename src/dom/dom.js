@@ -597,7 +597,8 @@ Element.Methods = {
     var iframeGetAttributeThrowsError = (function(){
       var el = document.createElement('iframe'),
           isBuggy = false;
-          
+      el.setAttribute('src', 'javascript:false;');
+    
       document.documentElement.appendChild(el);
       try {
         el.getAttribute('type', 2);
