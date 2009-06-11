@@ -22,6 +22,7 @@ var Prototype = {
   BrowserFeatures: {
     XPath: !!document.evaluate,
     SelectorsAPI: !!document.querySelector,
+    QuirksMode: (document.compatMode ? document.compatMode == 'BackCompat' : false),
     ElementExtensions: (function() {
       if (window.HTMLElement && window.HTMLElement.prototype)
         return true;      
@@ -40,8 +41,7 @@ var Prototype = {
       }
       
       return false;      
-    })(),
-    QuirksMode: (document.compatMode ? document.compatMode == 'BackCompat' : false)
+    })()    
   },
 
   ScriptFragment: '<script[^>]*>([\\S\\s]*?)<\/script>',
