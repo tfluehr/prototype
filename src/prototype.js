@@ -9,39 +9,45 @@
 var Prototype = {
   Version: '<%= PROTOTYPE_VERSION %>',
   
-  Browser: {
-    IE:     !!(window.attachEvent &&
-      navigator.userAgent.indexOf('Opera') === -1),
-    Opera:  navigator.userAgent.indexOf('Opera') > -1,
-    WebKit: navigator.userAgent.indexOf('AppleWebKit/') > -1,
-    Gecko:  navigator.userAgent.indexOf('Gecko') > -1 && 
-      navigator.userAgent.indexOf('KHTML') === -1,
-    MobileSafari: !!navigator.userAgent.match(/Apple.*Mobile.*Safari/)
-  },
+  Browser: (function(){
+    var ua = navigator.userAgent;
+    // Opera (at least) 8.x+ has "Opera" as a [[Class]] of `window.opera`
+    // This is a safer inference than plain boolean type conversion of `window.opera`
+    var isOpera = Object.prototype.toString.call(window.opera) == '[object Opera]';
+    return {
+      IE:             !!window.attachEvent && !isOpera,
+      Opera:          isOpera,
+      WebKit:         ua.indexOf('AppleWebKit/') > -1,
+      Gecko:          ua.indexOf('Gecko') > -1 && ua.indexOf('KHTML') === -1,
+      MobileSafari:   /Apple.*Mobile.*Safari/.test(ua)
+    }
+  })(),
 
   BrowserFeatures: {
     XPath: !!document.evaluate,
     SelectorsAPI: !!document.querySelector,
     QuirksMode: (document.compatMode ? document.compatMode == 'BackCompat' : false),
     ElementExtensions: (function() {
-      if (window.HTMLElement && window.HTMLElement.prototype)
-        return true;      
-      if (window.Element && window.Element.prototype)
-        return true;
+      var constructor = window.Element || window.HTMLElement;
+      return !!(constructor && constructor.prototype);
     })(),
-    SpecificElementExtensions: (function() {      
+    SpecificElementExtensions: (function() {
       // First, try the named class
       if (typeof window.HTMLDivElement !== 'undefined')
         return true;
         
       var div = document.createElement('div');
-      if (div['__proto__'] && div['__proto__'] !== 
-       document.createElement('form')['__proto__']) {
-        return true;
+      var form = document.createElement('form');
+      var isSupported = false;
+      
+      if (div['__proto__'] && (div['__proto__'] !== form['__proto__'])) {
+        isSupported = true;
       }
       
-      return false;      
-    })()    
+      div = form = null;
+      
+      return isSupported;
+    })()
   },
 
   ScriptFragment: '<script[^>]*>([\\S\\s]*?)<\/script>',

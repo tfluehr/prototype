@@ -11,10 +11,10 @@
 var Class = (function() {
   /**
    *  Class.create([superclass][, methods...]) -> Class
-   *  - superclass (Class): The optional superclass to inherit methods from.
-   *  - methods (Object): An object whose properties will be "mixed-in" to the
-   *      new class. Any number of mixins can be added; later mixins take
-   *      precedence.
+   *    - superclass (Class): The optional superclass to inherit methods from.
+   *    - methods (Object): An object whose properties will be "mixed-in" to the
+   *        new class. Any number of mixins can be added; later mixins take
+   *        precedence.
    *
    *  Creates a class.
    *
@@ -35,6 +35,7 @@ var Class = (function() {
    *
    *  To extend a class after it has been defined, use [[Class#addMethods]].
   **/
+  function subclass() {};
   function create() {
     var parent = null, properties = $A(arguments);
     if (Object.isFunction(properties[0]))
@@ -49,7 +50,6 @@ var Class = (function() {
     klass.subclasses = [];
     
     if (parent) {
-      var subclass = function() {};
       subclass.prototype = parent.prototype;
       klass.prototype = new subclass;
       parent.subclasses.push(klass);
@@ -67,7 +67,7 @@ var Class = (function() {
   
   /**
    *  Class#addMethods(methods) -> Class
-   *  - methods (Object): The methods to add to the class.
+   *    - methods (Object): The methods to add to the class.
    *
    *  Adds methods to an existing class.
    *

@@ -1,3 +1,21 @@
+* Add Chrome 1+ to the list of supported browsers. (kangax)
+
+* Fix `Template#evaluate` "eating" previous character if `null` was returned from `toTemplateReplacements` function. (Nir, Jürgen Hörmann, kangax)
+
+* Make sure (deficient) APPLET, OBJECT and EMBED elements are extended with simulated methods in IE8. Return early if `_extendedByPrototype` is present on an element. (Tobie Langel, kangax)
+
+* Replace array creation and `Array#include` with a more efficient `RegExp#test`. (kangax)
+
+* Reorganize the way `ElementExtensions` are defined. Make sure elements used in SpecificElementExtensions are cleaned up. (kangax)
+
+* Make sure $A works with primitive values. (mr_justin, kangax)
+
+* Do not browser sniff when forking `unmark` function in selector suite. Instead use a proper test - PROPERTIES_ATTRIBUTES_MAP. (kangax)
+
+* Do not use short-hand element methods notation (@element.getStyle() -> Element.getStyle(@element)) for performance reasons. Do not use `$A` and `Array.prototype.shift` when `Array.prototype.slice` can be used instead. (kangax)
+
+* `Prototype.Browser.Opera` now uses stronger inference and is determined by [[Class]] of `window.opera` being - "Opera". (kangax)
+
 * Fix error in event.js which prevented attaching more than one responder for an event name/element combination. [#651 state:resolved] (Rob Lineweaver)
 
 * Do not sniff when testing for IE's proprietary mouseenter/mouseleave events support. Use more robust inference instead. (kangax)
