@@ -8,6 +8,7 @@
  *  A class that queries the document for elements that match a given CSS
  *  selector.
 **/
+var ff35 = false, ffset = false;
 var Selector = Class.create({
   /**
    *  new Selector(expression)
@@ -18,7 +19,25 @@ var Selector = Class.create({
   initialize: function(expression) {
     this.expression = expression.strip();
 
-    if (this.shouldUseSelectorsAPI()) {
+    if (!ffset && !Prototype.Browser.Gecko){
+      ffset = true;
+    }
+    if (!ffset) {
+      try {
+        ffset = true;
+        if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) { //test for Firefox/x.x or Firefox x.x (ignoring remaining digits);      
+          var ffversion = new Number(RegExp.$1);
+          if (ffversion == 3.5) {
+            ff35 = true;
+          }
+        }
+      } 
+      catch (error) {
+       ff35 = false;
+      }
+    }
+    if (this.shouldUseSelectorsAPI()
+      && !ff35) {
       this.mode = 'selectorsAPI';
     } else if (this.shouldUseXPath()) {
       this.mode = 'xpath';
