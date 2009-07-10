@@ -1,4 +1,4 @@
-/** section: DOM, related to: Element
+﻿/** section: DOM, related to: Element
  *  $(id) -> Element
  *  $(id...) -> [Element]...
  *    - id (String | Element): A DOM node or a string that references a node's
@@ -1678,6 +1678,7 @@ Element.extend = (function() {
   }
 
   var HTMLOBJECTELEMENT_PROTOTYPE_BUGGY = checkDeficiency('object');
+  var HTMLAPPLETELEMENT_PROTOTYPE_BUGGY = checkDeficiency('applet');
 
   if (Prototype.BrowserFeatures.SpecificElementExtensions) {
     // IE8 has a bug with `HTMLObjectElement` and `HTMLAppletElement` objects
