@@ -1,4 +1,4 @@
-/* Portions of the Selector class are derived from Jack Slocum's DomQuery,
+﻿/* Portions of the Selector class are derived from Jack Slocum's DomQuery,
  * part of YUI-Ext version 0.40, distributed under the terms of an MIT-style
  * license.  Please see http://www.yui-ext.com/ for more information. */
 
@@ -8,7 +8,6 @@
  *  A class that queries the document for elements that match a given CSS
  *  selector.
 **/
-var ff35 = false, ffset = false;
 var Selector = Class.create({
   /**
    *  new Selector(expression)
@@ -19,25 +18,7 @@ var Selector = Class.create({
   initialize: function(expression) {
     this.expression = expression.strip();
 
-    if (!ffset && !Prototype.Browser.Gecko){
-      ffset = true;
-    }
-    if (!ffset) {
-      try {
-        ffset = true;
-        if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) { //test for Firefox/x.x or Firefox x.x (ignoring remaining digits);      
-          var ffversion = new Number(RegExp.$1);
-          if (ffversion == 3.5) {
-            ff35 = true;
-          }
-        }
-      } 
-      catch (error) {
-       ff35 = false;
-      }
-    }
-    if (this.shouldUseSelectorsAPI()
-      && !ff35) {
+    if (this.shouldUseSelectorsAPI()) {
       this.mode = 'selectorsAPI';
     } else if (this.shouldUseXPath()) {
       this.mode = 'xpath';
