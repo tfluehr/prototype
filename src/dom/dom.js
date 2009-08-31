@@ -111,7 +111,7 @@ Element.idCounter = 1;
 
 Element.Methods = {
   /**
-   *  Element#visible(@element) -> boolean
+   *  Element.visible(@element) -> boolean
    *
    *  Tells whether `element` is visible (i.e., whether its inline `display`
    *  CSS property is set to `none`.
@@ -121,7 +121,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#toggle(@element) -> Element
+   *  Element.toggle(@element) -> Element
    *
    *  Toggles the visibility of `element`. Returns `element`.
   **/
@@ -133,7 +133,7 @@ Element.Methods = {
 
 
   /**
-   *  Element#hide(@element) -> Element
+   *  Element.hide(@element) -> Element
    *
    *  Sets `display: none` on `element`. Returns `element`.
   **/
@@ -144,7 +144,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#show(@element) -> Element
+   *  Element.show(@element) -> Element
    *
    *  Removes `display: none` on `element`. Returns `element`.
   **/
@@ -155,7 +155,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#remove(@element) -> Element
+   *  Element.remove(@element) -> Element
    *
    *  Completely removes `element` from the document and returns it.
   **/
@@ -166,13 +166,26 @@ Element.Methods = {
   },
 
   /**
-   *  Element#update(@element[, newContent]) -> Element
+   *  Element.update(@element[, newContent]) -> Element
    *
    *  Replaces _the content_ of `element` with the `newContent` argument and
    *  returns `element`.
    *
+   *  `newContent` may be in any of these forms:
+   *  - [[String]]: A string of HTML to be parsed and rendered
+   *  - [[Element]]: An Element instance to insert
+   *  - ...any object with a `toElement` method: The method is called and the resulting element used
+   *  - ...any object with a `toHTML` method: The method is called and the resulting HTML string
+   *    is parsed and rendered
+   *
    *  If `newContent` is omitted, the element's content is blanked out (i.e.,
    *  replaced with an empty string).
+   *
+   *  If `newContent` is a string and contains one or more inline `<script>` tags, the scripts
+   *  are scheduled to be evaluated after a very brief pause (using [[Function#defer]]) to allow
+   *  the browser to finish updating the DOM. Note that the scripts are evaluated
+   *  in the scope of [[String#evalScripts]], not in the global scope, which has important
+   *  ramifications for your `var`s and `function`s. See [[String#evalScripts]] for details.
   **/
   update: (function(){
 
@@ -262,7 +275,7 @@ Element.Methods = {
   })(),
 
   /**
-   *  Element#replace(@element[, newContent]) -> Element
+   *  Element.replace(@element[, newContent]) -> Element
    *
    *  Replaces `element` _itself_ with `newContent` and returns `element`.
    *
@@ -284,18 +297,45 @@ Element.Methods = {
   },
 
   /**
-   *  Element#insert(@element, content) -> Element
-   *  - content (String | Object): The content to insert.
+   *  Element.insert(@element, content) -> Element
+   *  - content (String | Element | Object): The content to insert.
    *
-   *  Inserts content at a specific point relative to `element`.
+   *  Inserts content `above`, `below`, at the `top`, and/or at the `bottom` of the
+   *  given element, depending on the option(s) given.
    *
-   *  The `content` argument can be a string, in which case the implied
-   *  insertion point is `bottom`. Or it can be an object that specifies
-   *  one or more insertion points (e.g., `{ bottom: "foo", top: "bar" }`).
+   *  `insert` accepts content in any of these forms:
+   *  - [[String]]: A string of HTML to be parsed and rendered
+   *  - [[Element]]: An Element instance to insert
+   *  - ...any object with a `toElement` method: The method is called and the resulting element used
+   *  - ...any object with a `toHTML` method: The method is called and the resulting HTML string
+   *    is parsed and rendered
    *
-   *  Accepted insertion points are `before` (as `element`'s previous sibling);
-   *  `after` (as `element's` next sibling); `top` (as `element`'s first
-   *  child); and `bottom` (as `element`'s last child).
+   *  The `content` argument can be the content to insert, in which case the implied
+   *  insertion point is `bottom`, or an object that specifies one or more insertion
+   *  points (e.g., `{ bottom: "foo", top: "bar" }`).
+   *
+   *  Accepted insertion points are:
+   *  - `before` (as `element`'s previous sibling)
+   *  - `after` (as `element's` next sibling)
+   *  - `top` (as `element`'s first child)
+   *  - `bottom` (as `element`'s last child)
+   *
+   *  <h4>Examples</h4>
+   *
+   *  Insert the given HTML at the bottom of the element (using the default):
+   *
+   *      $('myelement').insert("<p>HTML to append</p>");
+   *
+   *      $('myelement').insert({
+   *        top: new Element('img', {src: 'logo.png'})
+   *      });
+   *
+   *  Put `hr`s `before` and `after` the element:
+   *
+   *      $('myelement').insert({
+   *        before: "<hr>",
+   *        after: "<hr>"
+   *      });
   **/
   insert: function(element, insertions) {
     element = $(element);
@@ -334,7 +374,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#wrap(@element, wrapper[, attributes]) -> Element
+   *  Element.wrap(@element, wrapper[, attributes]) -> Element
    *  - wrapper (Element | String): An element to wrap `element` inside, or
    *    else a string representing the tag name of an element to be created.
    *  - attributes (Object): A set of attributes to apply to the wrapper
@@ -355,7 +395,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#inspect(@element) -> String
+   *  Element.inspect(@element) -> String
    *
    *  Returns the debug-oriented string representation of `element`.
   **/
@@ -371,7 +411,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#recursivelyCollect(element, property) -> [Element...]
+   *  Element.recursivelyCollect(@element, property) -> [Element...]
    *
    *  Recursively collects elements whose relationship to `element` is
    *  specified by `property`. `property` has to be a _property_ (a method
@@ -388,7 +428,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#ancestors(@element) -> [Element...]
+   *  Element.ancestors(@element) -> [Element...]
    *
    *  Collects all of `element`'s ancestors and returns them as an array of
    *  elements.
@@ -398,7 +438,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#descendants(@element) -> [Element...]
+   *  Element.descendants(@element) -> [Element...]
    *
    *  Collects all of element's descendants and returns them as an array of
    *  elements.
@@ -408,7 +448,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#firstDescendant(@element) -> Element
+   *  Element.firstDescendant(@element) -> Element
    *
    *  Returns the first child that is an element.
    *
@@ -422,7 +462,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#childElements(@element) -> [Element...]
+   *  Element.immediateDescendants(@element) -> [Element...]
    *
    *  Collects all of `element`'s immediate descendants (i.e., children) and
    *  returns them as an array of elements.
@@ -435,7 +475,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#previousSiblings(@element) -> [Element...]
+   *  Element.previousSiblings(@element) -> [Element...]
    *
    *  Collects all of `element`'s previous siblings and returns them as an
    *  array of elements.
@@ -445,7 +485,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#nextSiblings(@element) -> [Element...]
+   *  Element.nextSiblings(@element) -> [Element...]
    *
    *  Collects all of `element`'s next siblings and returns them as an array
    *  of elements.
@@ -455,7 +495,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#siblings(@element) -> [Element...]
+   *  Element.siblings(@element) -> [Element...]
    *  Collects all of element's siblings and returns them as an array of
    *  elements.
   **/
@@ -466,7 +506,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#match(@element, selector) -> boolean
+   *  Element.match(@element, selector) -> boolean
    *  - selector (String): A CSS selector.
    *
    *  Checks if `element` matches the given CSS selector.
@@ -478,8 +518,8 @@ Element.Methods = {
   },
 
   /**
-   *  Element#up(@element[, expression[, index = 0]]) -> Element
-   *  Element#up(@element[, index = 0]) -> Element
+   *  Element.up(@element[, expression[, index = 0]]) -> Element
+   *  Element.up(@element[, index = 0]) -> Element
    *  - expression (String): A CSS selector.
    *
    *  Returns `element`'s first ancestor (or the Nth ancestor, if `index`
@@ -496,8 +536,8 @@ Element.Methods = {
   },
 
   /**
-   *  Element#down(@element[, expression[, index = 0]]) -> Element
-   *  Element#down(@element[, index = 0]) -> Element
+   *  Element.down(@element[, expression[, index = 0]]) -> Element
+   *  Element.down(@element[, index = 0]) -> Element
    *  - expression (String): A CSS selector.
    *
    *  Returns `element`'s first descendant (or the Nth descendant, if `index`
@@ -513,8 +553,8 @@ Element.Methods = {
   },
 
   /**
-   *  Element#previous(@element[, expression[, index = 0]]) -> Element
-   *  Element#previous(@element[, index = 0]) -> Element
+   *  Element.previous(@element[, expression[, index = 0]]) -> Element
+   *  Element.previous(@element[, index = 0]) -> Element
    *  - expression (String): A CSS selector.
    *
    *  Returns `element`'s first previous sibling (or the Nth, if `index`
@@ -531,8 +571,8 @@ Element.Methods = {
   },
 
   /**
-   *  Element#next(@element[, expression[, index = 0]]) -> Element
-   *  Element#next(@element[, index = 0]) -> Element
+   *  Element.next(@element[, expression[, index = 0]]) -> Element
+   *  Element.next(@element[, index = 0]) -> Element
    *  - expression (String): A CSS selector.
    *
    *  Returns `element`'s first following sibling (or the Nth, if `index`
@@ -550,7 +590,7 @@ Element.Methods = {
 
 
   /**
-   *  Element#select(@element, selector...) -> [Element...]
+   *  Element.select(@element, selector...) -> [Element...]
    *  - selector (String): A CSS selector.
    *
    *  Takes an arbitrary number of CSS selectors and returns an array of
@@ -574,7 +614,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#identify(@element) -> String
+   *  Element.identify(@element) -> String
    *
    *  Returns `element`'s ID. If `element` does not have an ID, one is
    *  generated, assigned to `element`, and returned.
@@ -589,18 +629,13 @@ Element.Methods = {
   },
 
   /**
-   *  Element#readAttribute(@element, attributeName) -> String | null
+   *  Element.readAttribute(@element, attributeName) -> String | null
    *
    *  Returns the value of `element`'s attribute with the given name.
   **/
   readAttribute: function(element, name) {
     element = $(element);
     if (Prototype.Browser.IE) {
-      // Circumvent issue in IE that causes crash.
-      if (name === 'type' &&
-        element.tagName.toUpperCase() == 'IFRAME') {
-        return element.getAttribute('type');
-      }
       var t = Element._attributeTranslations.read;
       if (t.values[name]) return t.values[name](element, name);
       if (t.names[name]) name = t.names[name];
@@ -613,8 +648,8 @@ Element.Methods = {
   },
 
   /**
-   *  Element#writeAttribute(@element, attribute[, value = true]) -> Element
-   *  Element#writeAttribute(@element, attributes) -> Element
+   *  Element.writeAttribute(@element, attribute[, value = true]) -> Element
+   *  Element.writeAttribute(@element, attributes) -> Element
    *
    *  Adds, changes, or removes attributes passed as either a hash or a
    *  name/value pair.
@@ -640,7 +675,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#getHeight(@element) -> Number
+   *  Element.getHeight(@element) -> Number
    *
    *  Returns the height of `element`.
   **/
@@ -649,7 +684,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#getWidth(@element) -> Number
+   *  Element.getWidth(@element) -> Number
    *
    *  Returns the width of `element`.
   **/
@@ -658,7 +693,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#classNames(@element) -> [String...]
+   *  Element.classNames(@element) -> [String...]
    *
    *  Returns a new instance of [[Element.ClassNames]], an [[Enumerable]]
    *  object used to read and write CSS class names of `element`.
@@ -668,7 +703,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#hasClassName(@element, className) -> Boolean
+   *  Element.hasClassName(@element, className) -> Boolean
    *
    *  Checks whether `element` has the given CSS class name.
   **/
@@ -680,7 +715,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#addClassName(@element, className) -> Element
+   *  Element.addClassName(@element, className) -> Element
    *
    *  Adds a CSS class to `element`.
   **/
@@ -692,7 +727,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#removeClassName(@element, className) -> Element
+   *  Element.removeClassName(@element, className) -> Element
    *
    *  Removes a CSS class from `element`.
   **/
@@ -704,7 +739,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#toggleClassName(@element, className) -> Element
+   *  Element.toggleClassName(@element, className) -> Element
    *
    *  Toggles the presence of a CSS class on `element`.
   **/
@@ -715,7 +750,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#cleanWhitespace(@element) -> Element
+   *  Element.cleanWhitespace(@element) -> Element
    *
    *  Removes whitespace-only text node children from `element`.
   **/
@@ -732,7 +767,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#empty(@element) -> Element
+   *  Element.empty(@element) -> Element
    *
    *  Tests whether `element` is empty (i.e., contains only whitespace).
   **/
@@ -741,7 +776,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#descendantOf(@element, ancestor) -> Boolean
+   *  Element.descendantOf(@element, ancestor) -> Boolean
    *
    *  Checks if `element` is a descendant of `ancestor`.
   **/
@@ -761,7 +796,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#scrollTo(@element) -> Element
+   *  Element.scrollTo(@element) -> Element
    *
    *  Scrolls the window so that `element` appears at the top of the viewport.
   **/
@@ -773,7 +808,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#getStyle(@element, style) -> String | null
+   *  Element.getStyle(@element, style) -> String | null
    *  - style (String): The property name to be retrieved.
    *
    *  Returns the given CSS property value of `element`. The property can be
@@ -793,7 +828,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#getOpacity(@element) -> String | null
+   *  Element.getOpacity(@element) -> String | null
    *
    *  Returns the opacity of the element.
   **/
@@ -802,7 +837,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#setStyle(@element, styles) -> Element
+   *  Element.setStyle(@element, styles) -> Element
    *
    *  Modifies `element`'s CSS style properties.
    *
@@ -828,7 +863,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#setOpacity(@element, value) -> Element
+   *  Element.setOpacity(@element, value) -> Element
    *
    *  Sets the opacity of `element`.
   **/
@@ -840,7 +875,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#getDimensions(@element) -> Object
+   *  Element.getDimensions(@element) -> Object
    *
    *  Finds the computed width and height of `element` and returns them as
    *  key/value pairs of an object.
@@ -870,7 +905,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#makePositioned(@element) -> Element
+   *  Element.makePositioned(@element) -> Element
    *
    *  Allows for the easy creation of a CSS containing block by setting
    *  `element`'s CSS `position` to `relative` if its initial position is
@@ -893,7 +928,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#undoPositioned(@element) -> Element
+   *  Element.undoPositioned(@element) -> Element
    *
    *  Sets `element` back to the state it was in _before_
    *  [[Element.makePositioned]] was applied to it.
@@ -912,7 +947,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#makeClipping(@element) -> Element
+   *  Element.makeClipping(@element) -> Element
    *
    *  Simulates the poorly-supported CSS `clip` property by setting `element`'s
    *  `overflow` value to `hidden`.
@@ -927,7 +962,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#undoClipping(@element) -> Element
+   *  Element.undoClipping(@element) -> Element
    *
    *  Sets `element`'s CSS `overflow` property back to the value it had
    *  _before_ [[Element.makeClipping]] was applied.
@@ -941,7 +976,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#cumulativeOffset(@element) -> Array
+   *  Element.cumulativeOffset(@element) -> Array
    *
    *  Returns the offsets of `element` from the top left corner of the
    *  document.
@@ -960,7 +995,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#positionedOffset(@element) -> Array
+   *  Element.positionedOffset(@element) -> Array
    *
    *  Returns `element`'s offset relative to its closest positioned ancestor
    *  (the element that would be returned by [[Element.getOffsetParent]]).
@@ -984,7 +1019,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#absolutize(@element) -> Element
+   *  Element.absolutize(@element) -> Element
    *
    *  Turns `element` into an absolutely-positioned element _without_ changing
    *  its position in the page layout.
@@ -1013,7 +1048,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#relativize(@element) -> Element
+   *  Element.relativize(@element) -> Element
    *
    *  Turns `element` into a relatively-positioned element without changing
    *  its position in the page layout.
@@ -1055,7 +1090,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#getOffsetParent(@element) -> Element
+   *  Element.getOffsetParent(@element) -> Element
    *
    *  Returns `element`'s closest _positioned_ ancestor. If none is found, the
    *  `body` element is returned.
@@ -1072,7 +1107,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#viewportOffset(@element) -> Array
+   *  Element.viewportOffset(@element) -> Array
    *
    *  Returns the X/Y coordinates of element relative to the viewport.
    *
@@ -1105,7 +1140,7 @@ Element.Methods = {
   },
 
   /**
-   *  Element#clonePosition(@element, source[, options]) -> Element
+   *  Element.clonePosition(@element, source[, options]) -> Element
    *
    *  Clones the position and/or dimensions of `source` onto `element` as
    *  defined by `options`.
@@ -1158,12 +1193,12 @@ Element.Methods = {
 
 Object.extend(Element.Methods, {
   /** alias of: Element.select
-   *  Element#getElementsBySelector(@element, selector) -> [Element...]
+   *  Element.getElementsBySelector(@element, selector) -> [Element...]
   **/
   getElementsBySelector: Element.Methods.select,
 
   /** alias of: Element.immediateDescendants
-   *  Element#childElements(@element) -> [Element...]
+   *  Element.childElements(@element) -> [Element...]
   **/
   childElements: Element.Methods.immediateDescendants
 });
@@ -1385,7 +1420,7 @@ else if (Prototype.Browser.IE) {
                 attribute = attribute.split('{')[1];
                 attribute = attribute.split('}')[0];
                 return attribute.strip();
-              }
+              };
             }
             // IE8
             else if (value === '') {
@@ -1394,7 +1429,7 @@ else if (Prototype.Browser.IE) {
                 attribute = element.getAttribute(attribute);
                 if (!attribute) return null;
                 return attribute.strip();
-              }
+              };
             }
             el = null;
             return f;
@@ -1672,14 +1707,12 @@ Element.extend = (function() {
   }
 
   var HTMLOBJECTELEMENT_PROTOTYPE_BUGGY = checkDeficiency('object');
-  var HTMLAPPLETELEMENT_PROTOTYPE_BUGGY = checkDeficiency('applet');
 
   if (Prototype.BrowserFeatures.SpecificElementExtensions) {
     // IE8 has a bug with `HTMLObjectElement` and `HTMLAppletElement` objects
     // not being able to "inherit" from `Element.prototype`
     // or a specific prototype - `HTMLObjectElement.prototype`, `HTMLAppletElement.prototype`
-    if (HTMLOBJECTELEMENT_PROTOTYPE_BUGGY &&
-        HTMLAPPLETELEMENT_PROTOTYPE_BUGGY) {
+    if (HTMLOBJECTELEMENT_PROTOTYPE_BUGGY) {
       return function(element) {
         if (element && typeof element._extendedByPrototype == 'undefined') {
           var t = element.tagName;
@@ -1918,7 +1951,7 @@ Element.Storage = {
 
 Element.addMethods({
   /**
-   *  Element#getStorage(@element) -> Hash
+   *  Element.getStorage(@element) -> Hash
    *
    *  Returns the [[Hash]] object that stores custom metadata for this element.
   **/
@@ -1941,7 +1974,7 @@ Element.addMethods({
   },
 
   /**
-   *  Element#store(@element, key, value) -> Element
+   *  Element.store(@element, key, value) -> Element
    *
    *  Stores a key/value pair of custom metadata on the element.
    *
@@ -1961,7 +1994,7 @@ Element.addMethods({
   },
 
   /**
-   *  Element#retrieve(@element, key[, defaultValue]) -> ?
+   *  Element.retrieve(@element, key[, defaultValue]) -> ?
    *
    *  Retrieves custom metadata set on `element` with [[Element.store]].
    *
@@ -1981,7 +2014,7 @@ Element.addMethods({
   },
 
   /**
-   *  Element#clone(@element, deep) -> Element
+   *  Element.clone(@element, deep) -> Element
    *  - deep (Boolean): Whether to clone `element`'s descendants as well.
    *
    *  Returns a duplicate of `element`.

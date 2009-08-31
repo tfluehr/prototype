@@ -27,16 +27,54 @@ var Form = {
    *  Form.serializeElements(elements[, options]) -> String | Object
    *  - elements (Array): A collection of elements to include in the
    *    serialization.
-   *  - options (Object): A list of options that affect the return value
-   *    of the method.
+   *  - options (Object): _(Optional)_ A set of options that affect the return
+   *    value of the method.
    *
-   *  Serialize an array of form elements to a string suitable for Ajax
-   *  requests.
+   *  Serialize an array of form elements to an object or string suitable
+   *  for [[Ajax]] requests.
    *
-   *  If `options.hash` is `true`, returns an object of key/value pairs
-   *  instead (where keys are control names).
+   *  As per the HTML spec, disabled fields are not included.
+   *
+   *  If multiple elements have the same name and we're returning an object,
+   *  the value for that key in the object will be an array of the field values
+   *  in the order they appeared on the array of elements.
+   *
+   *  <h4>The Options</h4>
+   *
+   *  The options allow you to control two things: What kind of return
+   *  value you get (an object or a string), and whether and which `submit`
+   *  fields are included in that object or string.
+   *
+   *  If you do not supply an `options` object _at all_, the options
+   *  `{hash: false}` are used.
+   *
+   *  If you supply an `options` object, it may have the following options:
+   *  - `hash` ([[Boolean]]): `true` to return a plain object with keys and values
+   *    (not a [[Hash]]; see below), `false` to return a String in query string
+   *    format. If you supply an `options` object with no `hash` member, `hash`
+   *    defaults to `true`. Note that this is __not__ the same as leaving off the
+   *    `options` object entirely (see above).
+   *  - `submit` ([[Boolean]] | [[String]]): In essence: If you omit this option the
+   *    first submit button in the form is included; if you supply `false`,
+   *    no submit buttons are included; if you supply the name of a submit
+   *    button, the first button with that name is included. Note that the `false`
+   *    value __must__ really be `false`, not _falsey_; falsey-but-not-false is
+   *    like omitting the option.
+   *
+   *  _(Deprecated)_ If you pass in a [[Boolean]] instead of an object for `options`, it
+   *  is used as the `hash` option and all other options are defaulted.
+   *
+   *  <h4>A <em>hash</em>, not a Hash</h4>
+   *
+   *  If you opt to receive an object, it is a plain JavaScript object with keys
+   *  and values, __not__ a [[Hash]]. All JavaScript objects are hashes in the lower-case
+   *  sense of the word, which is why the option has that somewhat-confusing name.
   **/
   serializeElements: function(elements, options) {
+    // An earlier version accepted a boolean second parameter (hash) where
+    // the default if omitted was false; respect that, but if they pass in an
+    // options object (e.g., the new signature) but don't specify the hash option,
+    // default true, as that's the new preferred approach.
     if (typeof options != 'object') options = { hash: !!options };
     else if (Object.isUndefined(options.hash)) options.hash = true;
     var key, value, submitted = false, submit = options.submit;
@@ -63,21 +101,20 @@ var Form = {
 
 Form.Methods = {
   /**
-   *  Form#serialize(@form[, options]) -> String | Object
+   *  Form.serialize(@form[, options]) -> String | Object
    *  - options (Object): A list of options that affect the return value
    *    of the method.
    *
-   *  Serialize form data to a string suitable for Ajax requests.
+   *  Serialize form data to an object or string suitable for Ajax requests.
    *
-   *  If `options.hash` is `true`, returns an object of key/value pairs
-   *  instead (where keys are control names).
+   *  See [[Form.serializeElements]] for details on the options.
   **/
   serialize: function(form, options) {
     return Form.serializeElements(Form.getElements(form), options);
   },
 
   /**
-   *  Form#getElements(@form) -> [Element...]
+   *  Form.getElements(@form) -> [Element...]
    *
    *  Returns a collection of all controls within a form.
   **/
@@ -99,7 +136,7 @@ Form.Methods = {
   },
 
   /**
-   *  Form#getInputs(@form [, type [, name]]) -> [Element...]
+   *  Form.getInputs(@form [, type [, name]]) -> [Element...]
    *  - type (String): A value for the `type` attribute against which to
    *    filter.
    *  - name (String): A value for the `name` attribute against which to
@@ -127,7 +164,7 @@ Form.Methods = {
   },
 
   /**
-   *  Form#disable(@form) -> Element
+   *  Form.disable(@form) -> Element
    *
    *  Disables the form as a whole. Form controls will be visible but
    *  uneditable.
@@ -139,7 +176,7 @@ Form.Methods = {
   },
 
   /**
-   *  Form#enable(@form) -> Element
+   *  Form.enable(@form) -> Element
    *
    *  Enables a fully- or partially-disabled form.
   **/
@@ -150,7 +187,7 @@ Form.Methods = {
   },
 
   /**
-   *  Form#findFirstElement(@form) -> Element
+   *  Form.findFirstElement(@form) -> Element
    *
    *  Finds the first non-hidden, non-disabled control within the form.
   **/
@@ -168,7 +205,7 @@ Form.Methods = {
   },
 
   /**
-   *  Form#focusFirstElement(@form) -> Element
+   *  Form.focusFirstElement(@form) -> Element
    *
    *  Gives keyboard focus to the first element of the form. Returns the form.
   **/
@@ -179,7 +216,7 @@ Form.Methods = {
   },
 
   /**
-   *  Form#request([options]) -> Ajax.Request
+   *  Form.request(@form[, options]) -> Ajax.Request
    *  - options (Object): Options to pass along to the `Ajax.Request`
    *    constructor.
    *
@@ -256,7 +293,7 @@ Form.Element = {
 Form.Element.Methods = {
 
   /**
-   *  Form.Element#serialize(@element) -> String
+   *  Form.Element.serialize(@element) -> String
    *
    *  Returns a URL-encoded string representation of a form control in the
    *  `name=value` format.
@@ -275,7 +312,7 @@ Form.Element.Methods = {
   },
 
   /** alias of: $F
-   *  Form.Element#getValue(@element) -> String | Array
+   *  Form.Element.getValue(@element) -> String | Array
    *
    *  Returns the current value of a form control.
    *
@@ -291,7 +328,7 @@ Form.Element.Methods = {
   },
 
   /**
-   *  Form.Element#setValue(@element, value) -> Element
+   *  Form.Element.setValue(@element, value) -> Element
    *
    *  Sets `value` to be the value of the form control. Returns the element.
   **/
@@ -303,7 +340,7 @@ Form.Element.Methods = {
   },
 
   /**
-   *  Form.Element#clear(@element) -> Element
+   *  Form.Element.clear(@element) -> Element
    *
    *  Clears the contents of a text input. Returns the element.
   **/
@@ -313,7 +350,7 @@ Form.Element.Methods = {
   },
 
   /**
-   *  Form.Element#present(@element) -> Element
+   *  Form.Element.present(@element) -> Element
    *
    *  Returns `true` if a text input has contents, `false` otherwise.
   **/
@@ -339,7 +376,7 @@ Form.Element.Methods = {
   },
 
   /**
-   *  Form.Element#disable(@element) -> Element
+   *  Form.Element.disable(@element) -> Element
    *
    *  Disables a form control, effectively preventing its value from changing
    *  until it is enabled again.
@@ -351,7 +388,7 @@ Form.Element.Methods = {
   },
 
   /**
-   *  Form.Element#enable(@element) -> Element
+   *  Form.Element.enable(@element) -> Element
    *
    *  Enables a previously disabled form control.
   **/
@@ -444,8 +481,37 @@ Form.Element.Serializers = {
 
 /** section: DOM
  *  class Abstract.TimedObserver
+ *
+ *  An abstract DOM element observer class, subclasses of which can be used to periodically
+ *  check a value and trigger a callback when the value has changed.
+ *
+ *  A `TimedObserver` object will try to check a value using the `getValue()`
+ *  instance method which must be defined by the subclass. There are two out-of-the-box subclasses:
+ *  [[Form.Observer]], which serializes a form and triggers when the result has changed; and
+ *  [[Form.Element.Observer]], which triggers when the value of a given form field changes.
+ *
+ *  <h4>Creating Your Own TimedObserver Implementations</h4>
+ *
+ *  It's easy to create your own `TimedObserver` implementations: Simply subclass `TimedObserver`
+ *  and provide the `getValue()` method. For example, this is the complete source code for
+ *  [[Form.Element.Observer]]:
+ *
+ *      Form.Element.Observer = Class.create(Abstract.TimedObserver, {
+ *        getValue: function() {
+ *          return Form.Element.getValue(this.element);
+ *        }
+ *      });
 **/
 Abstract.TimedObserver = Class.create(PeriodicalExecuter, {
+  /**
+   *  new Abstract.TimedObserver(element, frequency, callback)
+   *  - element (String | Element): The DOM element to watch. Can be an element instance or an ID.
+   *  - frequency (Number): The frequency, in seconds&nbsp;&mdash; e.g., 0.33 to check for changes every
+   *    third of a second.
+   *  - callback (Function): The callback to trigger when the value changes.
+   *
+   *  Initializes an `Abstract.TimedObserver`; used by subclasses.
+  **/
   initialize: function($super, element, frequency, callback) {
     $super(callback, frequency);
     this.element   = $(element);
@@ -464,12 +530,21 @@ Abstract.TimedObserver = Class.create(PeriodicalExecuter, {
 
 /** section: DOM
  *  class Form.Element.Observer < Abstract.TimedObserver
+ *
+ *  An [[Abstract.TimedObserver]] subclass that watches for changes to a form field's value.
+ *  This triggers the callback when the form field's value (according to
+ *  [[Form.Element#getValue]]) changes. (Note that when the value actually changes can vary from
+ *  browser to browser, particularly with `select` boxes.)
 **/
 Form.Element.Observer = Class.create(Abstract.TimedObserver, {
   /**
    *  new Form.Element.Observer(element, frequency, callback)
+   *  - element (String | Element): The form element to watch. Can be an element instance or an ID.
+   *  - frequency (Number): The frequency, in seconds&nbsp;&mdash; e.g., 0.33 to check for changes every
+   *    third of a second.
+   *  - callback (Function): The callback to trigger when the value changes.
    *
-   *  Creates a timed observer for a specific form control.
+   *  Creates a Form.Element.Observer.
   **/
   getValue: function() {
     return Form.Element.getValue(this.element);
@@ -478,13 +553,22 @@ Form.Element.Observer = Class.create(Abstract.TimedObserver, {
 
 /** section: DOM
  *  class Form.Observer < Abstract.TimedObserver
+ *
+ *  An [[Abstract.TimedObserver]] subclass that watches for changes to a form.
+ *  The callback is triggered when the form changes&nbsp;&mdash; e.g., when any of its fields' values
+ *  changes, when fields are added/removed, etc.; anything that affects the serialized
+ *  form of the form (see [[Form#serialize]]).
 **/
 Form.Observer = Class.create(Abstract.TimedObserver, {
   /**
    *  new Form.Observer(element, frequency, callback)
+   *  - element (String | Element): The element of the form to watch. Can be an element
+   *    instance or an ID.
+   *  - frequency (Number): The frequency, in seconds -- e.g., 0.33 to check for changes every
+   *    third of a second.
+   *  - callback (Function): The callback to trigger when the form changes.
    *
-   *  Creates a timed observer that triggers when any value changes within
-   *  the form.
+   *  Creates a Form.Observer.
   **/
   initialize: function($super, element, frequency, callback, enhanced, textDelay) {    
     

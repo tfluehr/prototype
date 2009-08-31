@@ -1,4 +1,4 @@
-﻿var $RunBenchmarks = false;
+var $RunBenchmarks = false;
 
 function reduce(arr) {
   return arr.length > 1 ? arr : arr[0];
@@ -399,9 +399,11 @@ new Test.Unit.Runner({
   },
   testElementDownWithDotAndColon: function() {
     var a = $('dupL4_dotcolon'); 
-    var b = $('dupContainer.withdot:withcolon').down('#dupL4_dotcolon');
+    var b = $('dupContainer.withdot:active').down('#dupL4_dotcolon');    
+    var c = $('dupContainer.withdot:active').select('#dupL4_dotcolon');
     
     this.assertEqual(a, b);
+    this.assertEnumEqual([a], c);
   },
   
   testDescendantSelectorBuggy: function() {

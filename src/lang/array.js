@@ -37,6 +37,7 @@ Array.from = $A;
 
 /** section: Language
  * class Array
+ *  includes Enumerable
  *
  *  Prototype extends all native JavaScript arrays with quite a few powerful
  *  methods.
@@ -156,7 +157,7 @@ Array.from = $A;
 
   /**
    *  Array#compact() -> Array
-   *  Trims the array of `null`, `undefined`, or other "falsy" values.
+   *  Returns a copy of the array without any `null` or `undefined` values.
   **/
   function compact() {
     return this.select(function(value) {

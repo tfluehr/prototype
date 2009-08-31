@@ -126,6 +126,15 @@ Object.extend(String.prototype, (function() {
    *  Note that `stripTags` will only strip HTML 4.01 tags &mdash; like `div`,
    *  `span`, and `abbr`. It _will not_ strip namespace-prefixed tags such
    *  as `h:table` or `xsl:template`.
+   *
+   *  <h4>Caveat User</h4>
+   *
+   *  Note that the processing `stripTags` does is good enough for most purposes, but
+   *  you cannot rely on it for security purposes. If you're processing end-user-supplied
+   *  content, `stripTags` is probably _not_ sufficiently robust to ensure that the content
+   *  is completely devoid of HTML tags in the case of a user intentionally trying to circumvent
+   *  tag restrictions. But then, you'll be running them through [[String#escapeHTML]] anyway,
+   *  won't you?
   **/
   function stripTags() {
     return this.replace(/<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi, '');
@@ -134,7 +143,18 @@ Object.extend(String.prototype, (function() {
   /**
    *  String#stripScripts() -> String
    *
-   *  Strips a string of anything that looks like an HTML script block.
+   *  Strips a string of things that look like an HTML script blocks.
+   *
+   *  <h4>Example</h4>
+   *
+   *      "<p>This is a test.<script>alert("Look, a test!");</script>End of test</p>".stripScripts();
+   *      // => "<p>This is a test.End of test</p>"
+   *
+   *  <h4>Caveat User</h4>
+   *
+   *  Note that the processing `stripScripts` does is good enough for most purposes,
+   *  but you cannot rely on it for security purposes. If you're processing end-user-supplied
+   *  content, `stripScripts` is probably not sufficiently robust to prevent hack attacks.
   **/
   function stripScripts() {
     return this.replace(new RegExp(Prototype.ScriptFragment, 'img'), '');
@@ -157,8 +177,39 @@ Object.extend(String.prototype, (function() {
   /**
    *  String#evalScripts() -> Array
    *
-   *  Evaluates the content of any script block present in the string.
+   *  Evaluates the content of any inline `<script>` block present in the string.
    *  Returns an array containing the value returned by each script.
+   *  `<script>`  blocks referencing external files will be treated as though
+   *  they were empty (the result for that position in the array will be `undefined`);
+   *  external files are _not_ loaded and processed by `evalScripts`.
+   *
+   *  <h4>About `evalScripts`, `var`s, and defining functions</h4>
+   *
+   *  `evalScripts` evaluates script blocks, but this **does not** mean they are
+   *  evaluated in the global scope. They aren't, they're evaluated in the scope of
+   *  the `evalScripts` method. This has important ramifications for your scripts:
+   *
+   *  * Anything in your script declared with the `var` keyword will be
+   *    discarded momentarily after evaluation, and will be invisible to any
+   *    other scope.
+   *  * If any `<script>` blocks _define functions_, they will need to be assigned to
+   *    properties of the `window` object.
+   *
+   *  For example, this won't work:
+   *
+   *      // This kind of script won't work if processed by evalScripts:
+   *      function coolFunc() {
+   *        // Amazing stuff!
+   *      }
+   *
+   *  Instead, use the following syntax:
+   *
+   *      // This kind of script WILL work if processed by evalScripts:
+   *      window.coolFunc = function() {
+   *        // Amazing stuff!
+   *      }
+   *
+   *  (You can leave off the `window.` part of that, but it's bad form.)
   **/
   function evalScripts() {
     return this.extractScripts().map(function(script) { return eval(script) });
@@ -170,8 +221,7 @@ Object.extend(String.prototype, (function() {
    *  Converts HTML special characters to their entity equivalents.
   **/
   function escapeHTML() {
-    escapeHTML.text.data = this;
-    return escapeHTML.div.innerHTML;
+    return this.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   /** related to: String#escapeHTML
@@ -181,11 +231,8 @@ Object.extend(String.prototype, (function() {
    *  to their normal form.
   **/
   function unescapeHTML() {
-    var div = document.createElement('div');
-    div.innerHTML = this.stripTags();
-    return div.childNodes[0] ? (div.childNodes.length > 1 ?
-      $A(div.childNodes).inject('', function(memo, node) { return memo+node.nodeValue }) :
-      div.childNodes[0].nodeValue) : '';
+    // Warning: In 1.7 String#unescapeHTML will no longer call String#stripTags.
+    return this.stripTags().replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
   }
 
   /**
@@ -254,12 +301,12 @@ Object.extend(String.prototype, (function() {
    *
    *  Converts a string separated by dashes into a camelCase equivalent.
    *  For instance, 'foo-bar' would be converted to 'fooBar'.
-   *  
+   *
    *  <h4>Examples</h4>
-   *  
+   *
    *      'background-color'.camelize();
    *      // -> 'backgroundColor'
-   *      
+   *
    *      '-moz-binding'.camelize();
    *      // -> 'MozBinding'
   **/
@@ -293,7 +340,11 @@ Object.extend(String.prototype, (function() {
    *  underscore (`_`).
   **/
   function underscore() {
-    return this.gsub(/::/, '/').gsub(/([A-Z]+)([A-Z][a-z])/,'#{1}_#{2}').gsub(/([a-z\d])([A-Z])/,'#{1}_#{2}').gsub(/-/,'_').toLowerCase();
+    return this.replace(/::/g, '/')
+               .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+               .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+               .replace(/-/g, '_')
+               .toLowerCase();
   }
 
   /**
@@ -302,7 +353,7 @@ Object.extend(String.prototype, (function() {
    *  Replaces every instance of the underscore character ("_") by a dash ("-").
   **/
   function dasherize() {
-    return this.gsub(/_/,'-');
+    return this.replace(/_/g, '-');
   }
 
   /** related to: Object.inspect
@@ -312,9 +363,11 @@ Object.extend(String.prototype, (function() {
    *  double quotes, with backslashes and quotes escaped).
   **/
   function inspect(useDoubleQuotes) {
-    var escapedString = this.gsub(/[\x00-\x1f\\]/, function(match) {
-      var character = String.specialChar[match[0]];
-      return character ? character : '\\u00' + match[0].charCodeAt().toPaddedString(2, 16);
+    var escapedString = this.replace(/[\x00-\x1f\\]/g, function(character) {
+      if (character in String.specialChar) {
+        return String.specialChar[character];
+      }
+      return '\\u00' + character.charCodeAt().toPaddedString(2, 16);
     });
     if (useDoubleQuotes) return '"' + escapedString.replace(/"/g, '\\"') + '"';
     return "'" + escapedString.replace(/'/g, '\\\'') + "'";
@@ -336,7 +389,7 @@ Object.extend(String.prototype, (function() {
    *  This security method is called internally.
   **/
   function unfilterJSON(filter) {
-    return this.sub(filter || Prototype.JSONFilter, '#{1}');
+    return this.replace(filter || Prototype.JSONFilter, '$1');
   }
 
   /**
@@ -463,21 +516,3 @@ Object.extend(String.prototype, (function() {
   };
 })());
 
-Object.extend(String.prototype.escapeHTML, {
-  div:  document.createElement('div'),
-  text: document.createTextNode('')
-});
-
-String.prototype.escapeHTML.div.appendChild(String.prototype.escapeHTML.text);
-
-if ('<\n>'.escapeHTML() !== '&lt;\n&gt;') {
-  String.prototype.escapeHTML = function() {
-    return this.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  };
-}
-
-if ('&lt;\n&gt;'.unescapeHTML() !== '<\n>') {
-  String.prototype.unescapeHTML = function() {
-    return this.stripTags().replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
-  };
-}
