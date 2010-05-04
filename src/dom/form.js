@@ -664,6 +664,23 @@ Form.Observer = Class.create(Abstract.TimedObserver, {
               }
             }
           }
+          for (var prop in previousValue) {
+            if (Object.isUndefined(value[prop])) {
+              // removed checkbox unchecked?
+              element = $(form).select('[name=' + prop + ']');
+              element = element.find(function(el){
+                if (el.readAttribute('abortChange')) {
+                  el.writeAttribute('abortChange', false);
+                  return false;
+                }
+                return true;
+              });
+              if (element && element.tagName.toLowerCase() != 'select') {
+                elements.push(element);
+              }
+            }
+          }
+          
           // set previous value to new value
           previousValue = value;
           if (elements.length > 0) {
