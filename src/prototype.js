@@ -110,6 +110,12 @@ var Prototype = {
     SelectorsAPI: !!document.querySelector,
 
     /**
+     *  Prototype.BrowserFeatures.QuirksMode -> Boolean
+     *
+     *  Used internally to detect if the browser is in Quirks Mode 
+    **/
+    QuirksMode: (document.compatMode ? document.compatMode == 'BackCompat' : false),
+    /**
      *  Prototype.BrowserFeatures.ElementExtensions -> Boolean
      *
      *  Used internally to detect if the browser supports extending html element

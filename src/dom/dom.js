@@ -2921,7 +2921,18 @@ else if (Prototype.Browser.IE) {
     element = $(element);
     style = (style == 'float' || style == 'cssFloat') ? 'styleFloat' : style.camelize();
     var value = element.style[style];
-    if (!value && element.currentStyle) value = element.currentStyle[style];
+    if (!value && element.currentStyle) {
+      // IE will throw a permission denied error here if your css is loaded from
+      // a different domain with a charset header set on the response
+      // AND you are trying to read a value that was specified in the css file
+      // that IE does NOT support.  (think 'opacity')
+      try {
+        value = element.currentStyle[style];
+      }
+      catch(e) {
+        value = element.style[style];
+      }
+    }
 
     if (style == 'opacity') {
       if (value = (element.getStyle('filter') || '').match(/alpha\(opacity=(.*)\)/))
@@ -3686,7 +3697,9 @@ document.viewport = {
       return document;
 
     // Older versions of Opera.
-    if (B.Opera && window.parseFloat(window.opera.version()) < 9.5)
+    // tfluehr - or IE and quirks mode
+    if ((B.Opera && window.parseFloat(window.opera.version()) < 9.5)
+      || (B.IE && Prototype.BrowserFeatures.QuirksMode))
       return document.body;
 
     return document.documentElement;

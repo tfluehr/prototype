@@ -490,7 +490,10 @@
 
   function _destroyCache() {
     for (var i = 0, length = CACHE.length; i < length; i++) {
-      Event.stopObserving(CACHE[i]);
+      try { // ran into an access denied issues with IE (haven't been able to reproduce
+        Event.stopObserving(CACHE[i]);
+      } 
+      catch (e) {}
       CACHE[i] = null;
     }
   }
