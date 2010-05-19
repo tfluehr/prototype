@@ -955,6 +955,171 @@ Form.Observer = Class.create(Abstract.TimedObserver, {
    *
    *  Creates a [[Form.Observer]].
   **/
+  initialize: function($super, element, frequency, callback, enhanced, textDelay) {    
+    
+    if (!enhanced) {
+      $super(element, frequency, callback);
+    }
+    else {
+      element = $(element);
+      var callbackTimer;
+      var observerObject = this;
+      var changeCallback = function(elements, form, data){
+        if (!form) {
+          // if the callback came from the select onChange then set the parameters to the proper values
+          form = $(elements.element().form);
+          elements = [elements.element()];
+          data = form.serialize(true);
+        }
+        // if textDelay was passed and only one element has changed and the form is not submitting and the element is text/textarea then delay the callback for textDelay seconds
+        if (textDelay && !form.submitting && (elements.length == 1 && (elements.first().tagName.toLowerCase() == 'textarea' || (elements.first().tagName.toLowerCase() == 'input' && elements.first().type.toLowerCase() == 'text')))) {
+          clearTimeout(callbackTimer);
+          callbackTimer = callback.delay(textDelay, elements, form, data);
+          return;
+        }
+        clearTimeout(callbackTimer);
+        if (elements) {
+          // call the users callback function
+          callback(elements, form, data);
+        }
+      };
+      // add change event binding to all select boxes in the form because firefox (and some other browsers) change the value of select boxes when the user hasn't clicked (onHover)
+      element.select('select').invoke('observe', 'change', changeCallback);
+      // disable Visual Studio DotNet controls because viewstate can be very large and causes the observer to barf.
+      element.select('#__EVENTTARGET', '#__EVENTARGUMENT', '#__VIEWSTATE').each(Form.Element.disable);
+      var that = this;
+      $super(element, frequency, (function(){
+        // the starting value of the form
+        var previousValue = element.serialize(true);
+        var processFunc = function(form, value){
+          // haven't finished previous loop 
+          if (form.processing) { return; }
+          var element, elements = [];
+          form.processing = true;
+          // new value of form
+          value = value.parseQuery();
+          for (var prop in value) {
+            // if - not an array process normally
+            if (!Object.isArray(value[prop]) && !Object.isArray(previousValue[prop])) {
+              if (value[prop] !== previousValue[prop]) {
+                // find all form elements with the name prop
+                element = $(form).select('[name=' + prop + ']');
+                element = element.find(function(el){
+                  if (el.readAttribute('abortChange')) {
+                    // abortChange attribute is set so don't process this element for changes and clear the attribute
+                    el.writeAttribute('abortChange', false);
+                    return false;
+                  }
+                  return $F(el) === value[prop];
+                });
+                if (element && element.tagName.toLowerCase() != 'select') {
+                  elements.push(element);
+                }
+              }
+            }
+            else if (value[prop].toJSON() !== previousValue[prop].toJSON()) {
+              // else - array compare the json string
+              var val, prevVal, newVal;
+              // make sure new value is an array (in case of single value) clone for safety
+              val = $A(value[prop]).clone();
+              // make sure previous value is an array (in case of single value) clone for safety
+              prevVal = $A(previousValue[prop]).clone();
+              if (val.length > prevVal.length) {
+                newVal = val.reject(function(item){
+                  return prevVal.indexOf(item) != -1;
+                });
+              }
+              else {
+                newVal = prevVal.reject(function(item){
+                  return val.indexOf(item) != -1;
+                });
+              }
+              // find all form elements with the name prop
+              element = $(form).select('[name=' + prop + ']');
+              element = element.find(function(el){
+                if (el.readAttribute('abortChange')) {
+                  // abortChange attribute is set so don't process this element for changes and clear the attribute 
+                  el.writeAttribute('abortChange', false);
+                  return false;
+                }
+                return el.value === newVal.reduce();
+              });
+              if (element && element.tagName.toLowerCase() != 'select') {
+                elements.push(element);
+              }
+            }
+          }
+          for (var prop in previousValue) {
+            if (Object.isUndefined(value[prop])) {
+              // removed checkbox unchecked?
+              element = $(form).select('[name=' + prop + ']');
+              element = element.find(function(el){
+                if (el.readAttribute('abortChange')) {
+                  el.writeAttribute('abortChange', false);
+                  return false;
+                }
+                return true;
+              });
+              if (element && element.tagName.toLowerCase() != 'select') {
+                elements.push(element);
+              }
+            }
+          }
+          
+          // set previous value to new value
+          previousValue = value;
+          if (elements.length > 0) {
+            changeCallback(elements, form, value);
+          }
+          form.processing = false;
+        };
+        var wrapSubmit = function(){
+          if (!observerObject.observerSubmit){
+            observerObject.observerSubmit = element.submit;
+            element.submit = function(){
+              onSubmit(element);
+              element.submit();
+            }
+          }          
+        };
+        var onSubmit = function(ev){
+          var formEl;
+          if (typeof(ev.element) != 'undefined'){
+            formEl = ev.element();
+          }
+          else {
+            formEl = ev;
+          }
+          // stop the observer
+          that.stop(true);
+          // to monitor when the form is submitting to prevent observers
+          formEl.submitting = true;
+          // process one last time prior to submitting to make sure all js has run
+          processFunc(element, element.serialize());
+          // enable dotnet elements so they post with the form.
+          formEl.select('#__EVENTTARGET', '#__EVENTARGUMENT', '#__VIEWSTATE').invoke('enable');
+          that.unwrapSubmit();
+        }.bind(this);
+        // wraps form.submit to make sure we catch it.
+        wrapSubmit(element);
+        element.observe('submit', onSubmit);
+        
+        return processFunc;
+      })());
+    }
+  },
+  unwrapSubmit: function(){    
+    if (this.observerSubmit) {
+      this.element.submit = this.observerSubmit;
+      this.observerSubmit = null;
+    }
+  },
+  stop: function(fromSubmit) {
+    if (!fromSubmit) this.unwrapSubmit();      
+    if (!this.timer) return;
+    clearInterval(this.timer);
+    this.timer = null;
+  },
   getValue: function() {
     return Form.serialize(this.element);
   }
